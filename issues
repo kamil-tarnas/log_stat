@@ -1,0 +1,42 @@
+# MVP_DONE:: Multiple stats to be processed
+# TODO: Prevent multiple passes over files
+# TODO: Read into an variable (preserving the \n s and so on) to avoid multiple greps
+# TODO: Do the calculations in intervals - use percents or linear scale or logarithmic scale
+# TODO: Make it show nice charts - visualize the data usig Python script
+# TODO: Make .* be more clever to not match statName something...
+# REFINE: bc needs to print leading zeros
+# MVP_DONE: Printing one leading zero - maybe this is even better for readability sake?
+# TODO: Make a custom flag for fractional part precision in percentage printing (the scale=3; and %.3f\n)
+# TODO: Make the statictics printing aligned - that is the output values should be in one column or
+#       something like that
+
+# TODO: [[big]] Parametrize everything - the output of echos, the structure (that is 1. number of occur, 2. stat name, 3. stat value
+#               although this might not be needed), support non-numeric values of stats, make a stat-value separator custom (something
+#               lke -F or -IFS flag (supposedly a regex?), make the "iter+=3" (the number 3 in that expression) custom (this might not be
+#               needed - it depends on the approach taken
+#       part1: --buckets=x (for example '--buckets=10') distribute the values over equally-sized buckets 
+#              of the number of x (need to take a maxmimal 
+#       part2: --linear-buckets=x and --log-buckets=x
+
+# MVP_DONE: Colorful percentages and stat values - if it won't break anything - setting and unsetting with --raw flag
+#           is in progress
+# TODO: Bind the trace echo utility...
+# TODO: Non-numerical values of stat
+# TODO: Export raw dara to .csv or something similar
+# TODO: Enable log redirect --log=none (is default), --log=stdout --log=stderr
+# TODO: Modularize to a config part, run part and so on...
+# TODO: export var the variables and use in Python (import sys - probably not needed) import os and os.environ['var']
+# For exporting associative arrays workaround:
+# https://stackoverflow.com/questions/12944674/how-to-export-an-associative-array-hash-in-bash
+# TODO: Freeze the development - rewrite as an alternative in C++, make for both Bash and C++, write "TODO" as issues on GitHub
+#       Maybe encapsulate and modularize a bit more - extract the function call arguments and return values in Bash, so it 
+#       will match the C++ implementation and would be unit-testable...
+
+# TODO: Modularize the script, use make (two targets - one for Bash, the second one in highly optimized C++ code) and before that use 
+#       google search to find the best way of modularizing the script
+
+# TODO: Have defined arguments for functions (via $1, $2, ...) and defined return values (via echo
+#       at the end of the functions)
+
+# TODO: Test the script by having special reference file for parsing and reference output value 
+#       -> running the script -> invoking 'diff' and checking for differences...

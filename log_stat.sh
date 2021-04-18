@@ -1,54 +1,39 @@
 #!/bin/bash
 
-
-# usage:
+# Usage:
 # ./stat.sh <log_file> <stat1> <stat2> ... [--help] [--steps=<number>] [--height=<number>]
-
-# MVP_DONE:: Multiple stats to be processed
-# TODO: Prevent multiple passes over files
-# TODO: Read into an variable (preserving the \n s and so on) to avoid multiple greps
-# TODO: Do the calculations in intervals - use percents or linear scale or logarithmic scale
-# TODO: Make it show nice charts - visualize the data usig Python script
-# TODO: Make .* be more clever to not match statName something...
-# REFINE: bc needs to print leading zeros
-# MVP_DONE: Printing one leading zero - maybe this is even better for readability sake?
-# TODO: Make a custom flag for fractional part precision in percentage printing (the scale=3; and %.3f\n)
-# TODO: Make the statictics printing aligned - that is the output values should be in one column or
-#       something like that
-
-# TODO: [[big]] Parametrize everything - the output of echos, the structure (that is 1. number of occur, 2. stat name, 3. stat value
-#               although this might not be needed), support non-numeric values of stats, make a stat-value separator custom (something
-#               lke -F or -IFS flag (supposedly a regex?), make the "iter+=3" (the number 3 in that expression) custom (this might not be
-#               needed - it depends on the approach taken
-#       part1: --buckets=x (for example '--buckets=10') distribute the values over equally-sized buckets
-#              of the number of x (need to take a maxmimal
-#       part2: --linear-buckets=x and --log-buckets=x
-
-# MVP_DONE: Colorful percentages and stat values - if it won't break anything - setting and unsetting with --raw flag
-#           is in progress
-# TODO: Bind the trace echo utility...
-# TODO: Non-numerical values of stat
-# TODO: Enable log redirect --log=none (is default), --log=stdout --log=stderr
-# TODO: Modularize to a config part, run part and so on...
-
 
 # Declare command line option arguments with default values
 rawOpt=false
-numberOfBuckets=4 # TODO: Intelligent handling of the number of buckets - lazy evalueation needed here
+bucketsOpt=4 #TODO: Intelligent handling of the number of buckets - lazy evluation needed here
 outOpt="/dev/null" # TODO: First argument to trace_echo...
 
-# TODO: make it support both --raw, --raw=true and --raw=false
-# TODO: need to exclude opts from the calculations of stats
+# Match STAT(at least one space before value and possibly non-alphanumerical values)VALUE
+ifsOpt="[[:space:]]*[^a-zA-Z0-9]*[[:space:]]+"
+
+# Match VALUE - the default format for value for a given stat
+valueFormatOpt="[0-9]+"
+
+
+trace_echo()
+{
+  local numOfFunctionsOnStack=${#FUNCNAME[*]}
+  echo $numOfFunctionsOnStack >> $outOpt
+  for (( i=$(($numOfFunctionsOnStack-1)); (( $i > 0 )) ; i-- )); do
+    echo -n ${FUNCNAME[$i]}"()->" >> $outOpt
+  done
+  echo $@ >> $outOpt
+}
+
+
 # TODO: Do not do any shifts? Just remove the element from the array?
-#for i in "${!array[@]}"; do
-#${array[i]}
-  #for i in "${!@}" - works
 
 numberOfOpts=0
 
 for i in "$@"
 do
 case $i in
+
   # rawOpt handling in case of "--opt=" and "-o="
   -r=*|--raw=*)
   rawOpt="${i#*=}"
@@ -70,20 +55,54 @@ case $i in
   outOpt="log"
   let numberOfOpts++
   ;;
+
+  # bucketsOpt handling in case of "--bucketsOpt=" and "-b="
+  -b=*|--buckets=*)
+  bucketsOpt="${i#*=}"
+  let numberOfOpts++
+  ;;
+  # bucketsOpt handling in case of "--bucketsOpt" and "-b", option provided - default value used
+  -b|--buckets)
+  bucketsOpt=4
+  let numberOfOpts++
+  ;;
+
+  # ifsOpt handling in case of "--ifsOpt=" and "-i="
+  -i=*|--ifs=*)
+  ifsOpt="${i#*=}"
+  let numberOfOpts++
+  ;;
+  # ifsOpt handling in case of "--ifsOpt" and "-i", option provided - default value used #TODO: Probaly not needed
+  -i|--ifs)
+  # TODO: Do not do anything for now
+  # just increase the number of opts, to not be processed as a stat
+  let numberOfOpts++
+  ;;
+
+  # ifsOpt handling in case of "--ifsOpt=" and "-i="
+  -v=*|--value-format=*)
+  valueFormatOpt="${i#*=}"
+  let numberOfOpts++
+  ;;
+  # ifsOpt handling in case of "--ifsOpt" and "-i", option provided - default value used #TODO: Probaly not needed
+  -v|--value-format)
+  # TODO: Do not do anything for now
+  # just increase the number of opts, to not be processed as a stat
+  let numberOfOpts++
+  ;;
+
   *)
   # unknown option
+  # TODO: If more options are provided - then add to ignored, to not be processes as a stat?
   ;;
 esac
 done
-#echo "rawOpt  = ${rawOpt}"
-#echo $numberOfOpts
 
 decomposedIterIncrement=3
 logFile=$1; shift
 
 numOfArgs=$#
 let "numOfElemToSlice = numOfArgs - numberOfOpts"
-#echo $numOfElemToSlice
 
 declare -a statNames=("$@") # Put it here if it is not a flag...
 statNames=("${statNames[@]::numOfElemToSlice}")
@@ -99,20 +118,27 @@ if [ "$rawOpt" = true ] ; then
   #unset $(compgen -v | grep "color.*")
 fi
 
-#TODO: Main data structures (presently need to be unset after every iteration over a stat)
+# TODO: Main data structures (presently need to be unset after every iteration over a stat)
 declare -A statOccurencesValueMap
 
 declare -a bucketIntervals
 declare -a bucketStatOccurrencesValueArray
 
-# TODO: Make the script work on extracted logs to be more efficient
-#logsExtracted=$(grep -E --color=never -o $statName.*[0-9]+ $logFile)
 
+# TODO: Make the script work on extracted logs to be more efficient
+# logsExtracted=$(grep -E --color=never -o $statName$ifsOpt$valueFormatOpt $logFile)
+
+# Desc: Calculates the total share of occurrences of a given stat
+# Params: $1 the name of searched stat
+# Return: The total number of occurrences for searched stat (regardless the value of stat)
 calcTotalShare()
 {
   declare statName=$1; shift
-  totalOccurrences=$(grep -E --color=never -o $statName.*[0-9]+ $logFile | wc -l)
-  echo $totalOccurrences >> $outOpt
+  totalOccurrences=$(grep -E --color=never -o $statName$ifsOpt$valueFormatOpt $logFile | wc -l)
+
+  trace_echo $totalOccurrences
+
+  echo $totalOccurrences
 }
 
 
@@ -120,19 +146,27 @@ calcTotalShare()
 calcTotalNumberOfValues()
 {
   declare statName=$1; shift
-  totalNumberOfValues=$(grep -E --color=never -o $statName.*[0-9]+ $logFile | sort -k 2 -n -t : | uniq -c | wc -l)
-  echo $totalNumberOfValues >> $outOpt
+
+  totalNumberOfValues=$(grep -E --color=never -o $statName$ifsOpt$valueFormatOpt $logFile \
+    | sort -k 2 -n -t : | uniq -c | wc -l)
+
+  trace_echo $totalNumberOfValues
 }
 
-
+# Desc: Prints the script output message after each processed stat
+# Params: $1 the total number of occurrences of given stat
+# Return: Nothing
 printStatResults()
 {
+  declare totalOccurrences=$1; shift
+
   for stat in "${!statOccurencesValueMap[@]}" # TODO: Print results
   do
     value=${statOccurencesValueMap[$stat]}
     echo "Share of occurrences of $statName with value $($colorBlue)$stat$($colorReset): $($colorGreen)$(echo "scale=3;
           (100*$value/$totalOccurrences)" | bc -l | awk '{printf "%.3f\n", $0}')%$($colorReset)"
   done
+  printf "\n"
 }
 
 
@@ -141,7 +175,7 @@ calculateBuckets()
   let min=minValue
   let max=minValue+bucketIntervalWidth-1
 
-  for ((bucket=0; (( $bucket < $numberOfBuckets )) ; bucket++)); do
+  for ((bucket=0; (( $bucket < $bucketsOpt )) ; bucket++)); do
 
     # TODO: Bash does not support multi-dim arrays, need to store it in some other way...
     #bucketIntervals[$bucket]=(min, max)
@@ -174,14 +208,15 @@ fillOccurrencesValueMap()
       maxValue=$value
     fi
 
-    echo "Occurrences" $occurences >> $outOpt
-    echo "Value:" $value >> $outOpt
+    trace_echo "Occurrences" $occurences
+    trace_echo "Value:" $value
+
     statOccurencesValueMap[$value]=$occurences #TODO: [[desc]] how many occurrences of specific value do we have?
   done
 
   #TODO: If it is done then we can distribute the occurences over the bins using minValue and maxValue
   #      for calculating the intervals
-  let bucketIntervalWidth=(maxValue-minValue)/numberOfBuckets
+  let bucketIntervalWidth=(maxValue-minValue)/bucketsOpt
 
   calculateBuckets
   #bucketIntervals
@@ -191,20 +226,33 @@ fillOccurrencesValueMap()
 }
 
 
+main()
+{
+printf "\n"
+
 for statName in "${statNames[@]}"; do
-  printf "\nResults for $($colorGreen)"$statName"$($colorReset):\n"
+  printf "Results for $($colorGreen)"$statName"$($colorReset):\n"
 
-  calcTotalShare "$statName"
+  totalOccurrences="$(calcTotalShare "$statName")"
 
-  extractedStat=$(grep -E --color=never -o $statName.*[0-9]+ $logFile | sort -k 2 -n -t : | uniq -c)
-  echo "extractedStat is"$extractedStat >> $outOpt
+  extractedStat=$(grep -E --color=never -o $statName$ifsOpt$valueFormatOpt $logFile \
+    | sort -k 2 -n -t : | uniq -c)
+
+  trace_echo "extractedStat is "$extractedStat
 
   read -a extractedStatDecomposed <<< $extractedStat
-  echo ${extractedStatDecomposed[@]} >> $outOpt
+
+  trace_echo ${extractedStatDecomposed[@]}
 
   fillOccurrencesValueMap
 
-  printStatResults
+  printStatResults "$totalOccurrences"
 
-  unset statOccurencesValueMap #TODO: this in setting and unsetting - there is no holding on the stat values, everything is zeroed after every iteration
+  #TODO: this in setting and unsetting - there is no holding on the stat values, everything is zeroed after every iteration
+  unset statOccurencesValueMap
 done
+}
+
+
+# Start the script
+main "$@"
