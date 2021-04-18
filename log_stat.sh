@@ -15,17 +15,6 @@ ifsOpt="[[:space:]]*[^a-zA-Z0-9]*[[:space:]]+"
 valueFormatOpt="[0-9]+"
 
 
-trace_echo()
-{
-  local numOfFunctionsOnStack=${#FUNCNAME[*]}
-  echo $numOfFunctionsOnStack >> $outOpt
-  for (( i=$(($numOfFunctionsOnStack-1)); (( $i > 0 )) ; i-- )); do
-    echo -n ${FUNCNAME[$i]}"()->" >> $outOpt
-  done
-  echo $@ >> $outOpt
-}
-
-
 # TODO: Do not do any shifts? Just remove the element from the array?
 
 numberOfOpts=0
@@ -251,6 +240,17 @@ for statName in "${statNames[@]}"; do
   #TODO: this in setting and unsetting - there is no holding on the stat values, everything is zeroed after every iteration
   unset statOccurencesValueMap
 done
+}
+
+
+trace_echo()
+{
+  local numOfFunctionsOnStack=${#FUNCNAME[*]}
+  echo $numOfFunctionsOnStack >> $outOpt
+  for (( i=$(($numOfFunctionsOnStack-1)); (( $i > 0 )) ; i-- )); do
+    echo -n ${FUNCNAME[$i]}"()->" >> $outOpt
+  done
+  echo $@ >> $outOpt
 }
 
 
