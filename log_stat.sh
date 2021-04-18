@@ -61,19 +61,21 @@ case $i in
   ifsOpt="${i#*=}"
   let numberOfOpts++
   ;;
-  # ifsOpt handling in case of "--ifsOpt" and "-i", option provided - default value used #TODO: Probaly not needed
+  # ifsOpt handling in case of "--ifsOpt" and "-i", option provided - default value used
+  # TODO: Probaly not needed
   -i|--ifs)
   # TODO: Do not do anything for now
   # just increase the number of opts, to not be processed as a stat
   let numberOfOpts++
   ;;
 
-  # ifsOpt handling in case of "--ifsOpt=" and "-i="
+  # valueFormatOpt handling in case of "--valueFormatOpt=" and "-v="
   -v=*|--value-format=*)
   valueFormatOpt="${i#*=}"
   let numberOfOpts++
   ;;
-  # ifsOpt handling in case of "--ifsOpt" and "-i", option provided - default value used #TODO: Probaly not needed
+  # valueFormatOpt handling in case of "--valueFormatOpt" and "-v"
+  # default value used #TODO: Probaly not needed
   -v|--value-format)
   # TODO: Do not do anything for now
   # just increase the number of opts, to not be processed as a stat
@@ -84,6 +86,7 @@ case $i in
   # unknown option
   # TODO: If more options are provided - then add to ignored, to not be processes as a stat?
   ;;
+
 esac
 done
 
@@ -142,6 +145,7 @@ calcTotalNumberOfValues()
   trace_echo $totalNumberOfValues
 }
 
+
 # Desc: Prints the script output message after each processed stat
 # Params: $1 the total number of occurrences of given stat
 # Return: Nothing
@@ -172,7 +176,8 @@ calculateBuckets()
     let min+=bucketIntervalWidth
     let max+=bucketIntervalWidth
 
-    #TODO:Handling of bucket balancing - the last or first bucket needs to be bigger due to rounding
+    # TODO:Handling of bucket balancing
+    # the last or first bucket needs to be bigger due to rounding
   done
 }
 
@@ -200,16 +205,17 @@ fillOccurrencesValueMap()
     trace_echo "Occurrences" $occurences
     trace_echo "Value:" $value
 
-    statOccurencesValueMap[$value]=$occurences #TODO: [[desc]] how many occurrences of specific value do we have?
+    #TODO: [[desc]] how many occurrences of specific value do we have?
+    statOccurencesValueMap[$value]=$occurences
   done
 
-  #TODO: If it is done then we can distribute the occurences over the bins using minValue and maxValue
-  #      for calculating the intervals
+  #TODO: If it is done then we can distribute the occurences over the bins
+  #      using minValue and maxValue for calculating the intervals
   let bucketIntervalWidth=(maxValue-minValue)/bucketsOpt
 
   calculateBuckets
   #bucketIntervals
-  # bucketStatOccurrencesValueArray
+  #bucketStatOccurrencesValueArray
 
   #echo $bucketIntervalWidth #TODO: Value looks okay...
 }
@@ -217,29 +223,30 @@ fillOccurrencesValueMap()
 
 main()
 {
-printf "\n"
+  printf "\n"
 
-for statName in "${statNames[@]}"; do
-  printf "Results for $($colorGreen)"$statName"$($colorReset):\n"
+  for statName in "${statNames[@]}"; do
+    printf "Results for $($colorGreen)"$statName"$($colorReset):\n"
 
-  totalOccurrences="$(calcTotalShare "$statName")"
+    totalOccurrences="$(calcTotalShare "$statName")"
 
-  extractedStat=$(grep -E --color=never -o $statName$ifsOpt$valueFormatOpt $logFile \
-    | sort -k 2 -n -t : | uniq -c)
+    extractedStat=$(grep -E --color=never -o $statName$ifsOpt$valueFormatOpt $logFile \
+      | sort -k 2 -n -t : | uniq -c)
 
-  trace_echo "extractedStat is "$extractedStat
+    trace_echo "extractedStat is "$extractedStat
 
-  read -a extractedStatDecomposed <<< $extractedStat
+    read -a extractedStatDecomposed <<< $extractedStat
 
-  trace_echo ${extractedStatDecomposed[@]}
+    trace_echo ${extractedStatDecomposed[@]}
 
-  fillOccurrencesValueMap
+    fillOccurrencesValueMap
 
-  printStatResults "$totalOccurrences"
+    printStatResults "$totalOccurrences"
 
-  #TODO: this in setting and unsetting - there is no holding on the stat values, everything is zeroed after every iteration
-  unset statOccurencesValueMap
-done
+    # TODO: this in setting and unsetting
+    # there is no holding on the stat values, everything is zeroed after every iteration
+    unset statOccurencesValueMap
+  done
 }
 
 
