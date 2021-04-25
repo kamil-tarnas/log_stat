@@ -9,9 +9,9 @@
 class Stat
 {
 public:
-	Stat(const std::string& statName);
+  Stat(const std::string& statName);
 
-	std::string GetName();
+  std::string GetName();
 
 private:
   std::string name_m;

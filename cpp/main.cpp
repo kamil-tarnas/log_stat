@@ -9,6 +9,8 @@
 #include "LogFile.hpp"
 #include "Stat.hpp"
 #include "Trace.hpp"
+#include "Opt.hpp"
+
 
 //#include <inttypes.h>
 //#ifndef UINT64_MAX
@@ -55,12 +57,12 @@ std::string valueFormat;
 
 unsigned long long calcTotalShare(std::string statName)
 {
-	ENTER_FUNCTION
+  ENTER_FUNCTION
   // If it matches the specific regex (if there are hits?) then increment
   // the counter...
-	globalTrace.Print("gotcha! in the calcTotalShare...");
-	LEAVE_FUNCTION
-	return 0;
+  globalTrace.Print("gotcha! in the calcTotalShare...");
+  LEAVE_FUNCTION
+  return 0;
 }
 
 
@@ -73,18 +75,19 @@ unsigned long long calcTotalShare(std::string statName)
 //# Match VALUE - the default format for value for a given stat
 //valueFormatOpt="[0-9]+"
 
-int main() // TODO: need to be included in the mimicking of script? or just add main()->main()
-           // to match Bash???
+int main(int argc, const char* argv[])
 {
-	ENTER_FUNCTION
-	//globalTrace.EnterFunction();
-	globalTrace.Print("gotcha!in main first");
+  ENTER_FUNCTION
 
+  Opt programOptions(argc, argv);
 
-	calcTotalShare("dummy");
+  //globalTrace.EnterFunction();
+  globalTrace.Print("gotcha!in main first");
 
-	globalTrace.Print("gotcha! in main second");
-	LEAVE_FUNCTION
+  calcTotalShare("dummy");
+
+  globalTrace.Print("gotcha! in main second");
+  LEAVE_FUNCTION
   return 0;
 }
 

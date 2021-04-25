@@ -12,10 +12,10 @@
 // start
 std::string MakeRegexGroup(std::string stringToWrap)
 {
-	// Wrap the string in parentheses and return
-	stringToWrap.append(")");
-	stringToWrap.insert(0, "(");
-	return stringToWrap;
+  // Wrap the string in parentheses and return
+  stringToWrap.append(")");
+  stringToWrap.insert(0, "(");
+  return stringToWrap;
 }
 
 extern std::vector<Stat> stats; //Get opts...
@@ -25,30 +25,30 @@ extern std::string valueFormat;
 
 LogFile::LogFile(const std::string& fileName)
 {
-	fileStream_m.open(fileName, std::ios::in);
+  fileStream_m.open(fileName, std::ios::in);
 
-	if (fileStream_m.is_open())
-	{
-			// Should be equivalence of trace_echo
-			std::cout << "'" << fileName << "' file opened successfully\n";
-	}
-	else
+  if (fileStream_m.is_open())
   {
-			std::cout << "Cannot open "<< fileName << "\n";
-	}
+      // Should be equivalence of trace_echo
+      std::cout << "'" << fileName << "' file opened successfully\n";
+  }
+  else
+  {
+      std::cout << "Cannot open "<< fileName << "\n";
+  }
 }
 
 
 LogFile::~LogFile()
 {
-	fileStream_m.close();
+  fileStream_m.close();
 }
 
 
 // Could be auto return type, but C++14 is needed for that
 std::istream& LogFile::GetLine(std::string& line)
 {
-	return std::getline(fileStream_m, line);
+  return std::getline(fileStream_m, line);
 }
 
 
@@ -56,17 +56,17 @@ std::istream& LogFile::GetLine(std::string& line)
 int LogFile::FindAndProcessStats()
 {
   // TODO: Concatenate stat names (process statNames)
-	// Concatenating is done for enabling one-pass over a log file
-	std::string statNamesRegex;
+  // Concatenating is done for enabling one-pass over a log file
+  std::string statNamesRegex;
 
-	for (auto& stat: stats)
-	{
-			statNamesRegex += stat.GetName() + "|";
-	}
-	// Make regex group
+  for (auto& stat: stats)
+  {
+      statNamesRegex += stat.GetName() + "|";
+  }
+  // Make regex group
 
-	// Wrap it in regex groups...
-	//Yes, and make this a separate class like EntrySkeleton
+  // Wrap it in regex groups...
+  //Yes, and make this a separate class like EntrySkeleton
   std::regex
     statSkeletonEntry("(^\040*)"+
                       MakeRegexGroup(statNamesRegex) +
@@ -79,20 +79,20 @@ int LogFile::FindAndProcessStats()
   const int ifsPos = 2;
   const int valueFormatPos = 3;
 
-	std::string line;
+  std::string line;
 
-	while (this->GetLine(line))
+  while (this->GetLine(line))
   {
-	  std::smatch matches;
-	  std::regex_search(line, matches, statSkeletonEntry);
+    std::smatch matches;
+    std::regex_search(line, matches, statSkeletonEntry);
 
-	  if (matches.size()) // TODO: Check if that is actually correct
-	  {
-	    // Check what has been matched in the statName group and process...
-	  }
+    if (matches.size()) // TODO: Check if that is actually correct
+    {
+      // Check what has been matched in the statName group and process...
+    }
 
-	//stats.push_back()
+  //stats.push_back()
   }
 
-	return 0;
+  return 0;
 }

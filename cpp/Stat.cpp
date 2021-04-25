@@ -8,5 +8,5 @@ Stat::Stat(const std::string& statName):
 
 std::string Stat::GetName()
 {
-	return name_m;
+  return name_m;
 }

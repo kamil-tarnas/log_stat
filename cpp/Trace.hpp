@@ -31,27 +31,27 @@
 class Trace
 {
 public:
-	// auto type will be deduced to std::string in C++20 and above
-	// auto type will be deduced to char[] // TODO: is it?
-	static constexpr auto callChainSuffix = "()->";
-	static constexpr auto callChainSuffixLen = 4;
-	static constexpr auto callEndSuffix = "(): ";
+  // auto type will be deduced to std::string in C++20 and above
+  // auto type will be deduced to char[] // TODO: is it?
+  static constexpr auto callChainSuffix = "()->";
+  static constexpr auto callChainSuffixLen = 4;
+  static constexpr auto callEndSuffix = "(): ";
 
-	Trace(const std::string& fileName);
+  Trace(const std::string& fileName);
 
-	~Trace();
+  ~Trace();
 
-	void EnterFunction();
+  void EnterFunction();
 
-	void LeaveFunction();
+  void LeaveFunction();
 
-	void Print(const std::string& text);
+  void Print(const std::string& text);
 
-	//private:
+  //private:
 public: // TODO: current hack, will be changed with trace_echo C++ implementation
-	std::ofstream traceStream_m;
-	unsigned numOfFunctionsOnStack_m;
-	std::string stackTrace_m;
+  std::ofstream traceStream_m;
+  unsigned numOfFunctionsOnStack_m;
+  std::string stackTrace_m;
 };
 
 
