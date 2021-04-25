@@ -29,12 +29,12 @@ LogFile::LogFile(const std::string& fileName)
 
   if (fileStream_m.is_open())
   {
-      // Should be equivalence of trace_echo
-      std::cout << "'" << fileName << "' file opened successfully\n";
+    // Should be equivalence of trace_echo
+    std::cout << "'" << fileName << "' file opened successfully\n";
   }
   else
   {
-      std::cout << "Cannot open "<< fileName << "\n";
+    std::cout << "Cannot open "<< fileName << "\n";
   }
 }
 
@@ -61,7 +61,7 @@ int LogFile::FindAndProcessStats()
 
   for (auto& stat: stats)
   {
-      statNamesRegex += stat.GetName() + "|";
+    statNamesRegex += stat.GetName() + "|";
   }
   // Make regex group
 
