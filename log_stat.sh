@@ -249,17 +249,28 @@ main()
   done
 }
 
-
+# TODO: Make $1 as outOpt optional, so it will be overwritten if provided?
+# Probably out-of-scope and will be left for the separate repository...
 trace_echo()
 {
-  local numOfFunctionsOnStack=${#FUNCNAME[*]}
-  echo $numOfFunctionsOnStack >> $outOpt
-  for (( i=$(($numOfFunctionsOnStack-1)); (( $i > 0 )) ; i-- )); do
+  # Subtracting 2, one because of array starting with 0, the second one
+  # because we do not want to have different behaviour when invoked with
+  # "source" versus "./" and to be aligned with C++ implementation
+  local numOfFunctionsOnStack=$(( ${#FUNCNAME[*]} - 2 ))
+  echo -n "depth="$numOfFunctionsOnStack" " >> $outOpt
+
+  # Print the call stack of current function (caller of trace_echo)
+  for (( i=numOfFunctionsOnStack; i > 1; i-- )); do
     echo -n ${FUNCNAME[$i]}"()->" >> $outOpt
   done
+
+  # Print the function name, which invoked trace_echo
+  echo -n ${FUNCNAME[1]}"(): " >> $outOpt
+
   echo $@ >> $outOpt
 }
 
+trace_echo "cos"
 
 # Start the script
 main "$@"
