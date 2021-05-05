@@ -1,5 +1,8 @@
 #include "LogFile.hpp"
 #include "Stat.hpp"
+#include "EntryRegex.hpp"
+#include "Trace.hpp"
+#include "ProgramState.hpp"
 
 
 #include <iostream>
@@ -8,91 +11,107 @@
 #include <string>
 
 
-// TODO: Modularize the below need to be removed:
-// start
-std::string MakeRegexGroup(std::string stringToWrap)
-{
-  // Wrap the string in parentheses and return
-  stringToWrap.append(")");
-  stringToWrap.insert(0, "(");
-  return stringToWrap;
-}
-
-extern std::vector<Stat> stats; //Get opts...
-extern std::string ifs;
-extern std::string valueFormat;
-//end
-
 LogFile::LogFile(const std::string& fileName)
 {
+  ENTER_FUNCTION
+
   fileStream_m.open(fileName, std::ios::in);
 
   if (fileStream_m.is_open())
   {
-    // Should be equivalence of trace_echo
-    std::cout << "'" << fileName << "' file opened successfully\n";
+    globalTrace.Print("'" + fileName + "' file opened successfully\n");
   }
   else
   {
-    std::cout << "Cannot open "<< fileName << "\n";
+    globalTrace.Print("Cannot open " + fileName + "\n");
   }
+
+  LEAVE_FUNCTION
 }
 
 
 LogFile::~LogFile()
 {
+  ENTER_FUNCTION
+
   fileStream_m.close();
+
+  LEAVE_FUNCTION
+}
+
+
+LogFile::LogFile(LogFile&& rhs)
+{
+  fileStream_m = std::move(rhs.fileStream_m);
+}
+
+
+LogFile& LogFile::operator=(LogFile&& rhs)
+{
+  fileStream_m = std::move(rhs.fileStream_m);
+  return *this;
 }
 
 
 // Could be auto return type, but C++14 is needed for that
 std::istream& LogFile::GetLine(std::string& line)
 {
+  ENTER_FUNCTION
+  LEAVE_FUNCTION
   return std::getline(fileStream_m, line);
 }
 
 
-// Pass heer the opts? More modular would be to pass the stats separately
-int LogFile::FindAndProcessStats()
+void LogFile::FindAndProcessStats(std::vector<Stat>& stats)
 {
-  // TODO: Concatenate stat names (process statNames)
-  // Concatenating is done for enabling one-pass over a log file
-  std::string statNamesRegex;
+  ENTER_FUNCTION
 
-  for (auto& stat: stats)
-  {
-    statNamesRegex += stat.GetName() + "|";
-  }
-  // Make regex group
+  std::string ifs =
+    ProgramState::GetInstance().ifsOpt; // default: "\040*[^a-zA-Z0-9]*\040*"
 
-  // Wrap it in regex groups...
-  //Yes, and make this a separate class like EntrySkeleton
-  std::regex
-    statSkeletonEntry("(^\040*)"+
-                      MakeRegexGroup(statNamesRegex) +
-                      MakeRegexGroup(ifs) +
-                      MakeRegexGroup(valueFormat) +
-                      "(.*)");
+  std::string valueFormat =
+    ProgramState::GetInstance().valueFormatOpt; //default: "[0-9]+"
 
-  // TODO: Check if that is even corect...
-  const int statNamePos = 1;
-  const int ifsPos = 2;
-  const int valueFormatPos = 3;
+  EntryRegex lineRegex(stats, ifs, valueFormat);
+
+  // TODO: In EntryRegex or in ProgramState::GetInstance()?
+  const int statNamePos = 2;
+  //const int ifsPos = 3; // TODO: Unused currently
+  const int valueFormatPos = 4;
 
   std::string line;
+  std::string info; // TODO: Debug, remove
 
-  while (this->GetLine(line))
+  while (GetLine(line))
   {
-    std::smatch matches;
-    std::regex_search(line, matches, statSkeletonEntry);
+    lineRegex.GetMatches(line);
 
-    if (matches.size()) // TODO: Check if that is actually correct
+    // TODO: Do that in the trace_echo...
+    info += "The number of matches is " + std::to_string(lineRegex.GetNumOfMatches()) + "\n";
+    for (unsigned i = 0; i < lineRegex.GetNumOfMatches(); ++i)
     {
-      // Check what has been matched in the statName group and process...
+      info += std::to_string(i) + " " + lineRegex.GetMatch(i) + "\n";
+      // zeroth match is the whole expression, the latter are the groups
     }
 
-  //stats.push_back()
+    if (lineRegex.GetNumOfMatches())
+    {
+      std::string matchedStatName = lineRegex.GetMatch(statNamePos);
+
+      auto statIter = std::find(stats.begin(), stats.end(), matchedStatName);
+
+      if (statIter != stats.end())
+      {
+        statIter->IncrementOccurr(lineRegex.GetMatch(valueFormatPos));
+      }
+      else
+      {
+        throw "Line matched the regex, but stat was not found in the vector!";
+      }
+    }
   }
 
-  return 0;
+  globalTrace.Print(info);
+
+  LEAVE_FUNCTION
 }

@@ -47,12 +47,17 @@ public:
 
   void Print(const std::string& text);
 
+  void ChangeStream(const std::string& stream);
+
   //private:
-public: // TODO: current hack, will be changed with trace_echo C++ implementation
+public: // TODO: currently a hack, will be changed with full trace_echo C++ implementation
   std::ofstream traceStream_m;
   unsigned numOfFunctionsOnStack_m;
   std::string stackTrace_m;
 };
+
+
+extern Trace globalTrace;
 
 
 #endif // #ifndef TRACE_HPP

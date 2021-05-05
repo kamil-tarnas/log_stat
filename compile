@@ -1,1 +1,0 @@
-g++ cpp/main.cpp cpp/LogFile.cpp cpp/Stat.cpp cpp/Trace.cpp cpp/Opt.cpp -o stat.out -std=c++11; ./stat.out; cat cpp_some_file

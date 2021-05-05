@@ -5,7 +5,7 @@
 
 
 // Create the global trace object
-Trace globalTrace("cpp_some_file");
+Trace globalTrace("/dev/null");
 
 
 // TODO: Redefine this with a singleton friend class having access to Trace global
@@ -61,4 +61,11 @@ void Trace::Print(const std::string& text)
 
   traceStream_m << "depth=" << numOfFunctionsOnStack_m << " "
       << textToPrint << text << "\n";
+}
+
+
+void Trace::ChangeStream(const std::string& stream)
+{
+  traceStream_m.close();
+  traceStream_m.open(stream);
 }

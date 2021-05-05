@@ -5,11 +5,14 @@
 #include <map>
 #include <utility>
 #include <regex>
+#include <numeric>
+
 
 #include "LogFile.hpp"
 #include "Stat.hpp"
 #include "Trace.hpp"
 #include "Opt.hpp"
+#include "ProgramState.hpp"
 
 
 //#include <inttypes.h>
@@ -45,22 +48,13 @@ using StatNameAndValuesVector =
 // In C++20 std::source_location::function_name
 // For the earlier standards - need to rely on compiler-specific solutions
 
-// TRACE
-//
 
-
-extern Trace globalTrace;
-std::vector<Stat> stats; //Get opts...
-std::string ifs;
-std::string valueFormat;
-
-
-unsigned long long calcTotalShare(std::string statName)
+unsigned long long mockTestTrace(std::string statName)
 {
   ENTER_FUNCTION
-  // If it matches the specific regex (if there are hits?) then increment
-  // the counter...
-  globalTrace.Print("gotcha! in the calcTotalShare...");
+
+  globalTrace.Print("gotcha! in the mockTestTrace()...");
+
   LEAVE_FUNCTION
   return 0;
 }
@@ -75,19 +69,44 @@ unsigned long long calcTotalShare(std::string statName)
 //# Match VALUE - the default format for value for a given stat
 //valueFormatOpt="[0-9]+"
 
+
 int main(int argc, const char* argv[])
 {
-  ENTER_FUNCTION
+  ENTER_FUNCTION // TODO: globalTrace.EnterFunction();
 
   Opt programOptions(argc, argv);
 
-  //globalTrace.EnterFunction();
-  globalTrace.Print("gotcha!in main first");
+  // TODO: This would firstly call the default ctor and then just
+  // reassign some values, get rid of this double initialization
+  // and make the ProgramState instantinable only by passing the Opt object
+  ProgramState::GetInstance().SetProgramState(programOptions);
 
-  calcTotalShare("dummy");
+  std::vector<Stat> stats = programOptions.GetStats();
 
-  globalTrace.Print("gotcha! in main second");
-  LEAVE_FUNCTION
+  const int logFileOptPos = 0;
+  LogFile logFile(programOptions.GetOpt(logFileOptPos));
+
+  logFile.FindAndProcessStats(stats);
+
+  // Add this point we are ready to calculate and print the results
+  for (auto& stat: stats)
+  {
+    stat.CalculateShare();
+    stat.PrintShare();
+  }
+
+  std::cout << "\n";
+
+
+  // TODO: Test and debug...
+
+  globalTrace.Print("gotcha! In main() first");
+
+  mockTestTrace("dummy");
+
+  globalTrace.Print("gotcha! In main() second");
+
+  LEAVE_FUNCTION // TODO: globalTrace.LeaveFunction();
   return 0;
 }
 
