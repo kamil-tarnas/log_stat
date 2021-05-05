@@ -153,7 +153,26 @@ printStatResults()
 {
   declare totalOccurrences=$1; shift
 
-  for stat in "${!statOccurencesValueMap[@]}" # TODO: Print results
+  sorted=()
+  for i in "${!statOccurencesValueMap[@]}"
+  do
+    #echo "${i} = ${statOccurencesValueMap[$i]}"
+    sorted+=("${i} = ${statOccurencesValueMap[$i]}")
+  done
+  #Put that somethere and sort sort -rn -k3
+
+  #echo "${sorted[@]}"
+  declare -a actuallySorted
+
+  # Here can be a subtle difference between Bash and C++ version due to how 'sort' works
+  # Basically, if exacly the same value of occurrences is found in two or more stats
+  # then the ordering might be different in printing between C++ and Bash version
+  # of the program
+  actuallySorted=($(printf '%s\n' "${sorted[@]}" | sort -rn -k3 | awk '{print $1}'))
+  #echo "${actuallySorted[@]}"
+
+  for stat in "${actuallySorted[@]]}" # TODO: Print results
+  #for stat in "${!statOccurencesValueMap[@]}" # TODO: Print results
   do
     value=${statOccurencesValueMap[$stat]}
     echo "Share of occurrences of $statName with value $($colorBlue)$stat$($colorReset): $($colorGreen)$(echo "scale=3;
