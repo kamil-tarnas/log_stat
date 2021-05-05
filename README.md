@@ -25,8 +25,12 @@ Build:
 ```bash
 make
 ```
-
 Usage:
+```bash
+./log_stat.out <log_file> <parameter_1> <parameter_2> ... [--raw] [--out=<output_file_or_stream>]
+```
+
+For example:
 ```bash
 ./log_stat.out log_02_03_2021 user errorCode --raw
 ```
